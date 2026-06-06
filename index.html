@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outlook 郵件自動匯總流程｜AI 治理專案</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@300;400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --accent: #388bfd;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --tag-bg: #1f2937;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Header */
+  .header {
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 48px;
+    border-left: 3px solid var(--accent);
+    padding-left: 20px;
+  }
+  .header .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+  .header p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .tag {
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Flow */
+  .flow {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Node */
+  .node {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s;
+    animation: fadeUp 0.5s ease both;
+  }
+  .node:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .node-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .icon-blue   { background: #1e3a5f; }
+  .icon-purple { background: #2e1065; }
+  .icon-green  { background: #064e3b; }
+  .icon-gray   { background: #1f2937; }
+
+  .node-body { flex: 1; }
+  .node-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .node-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .node-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--tag-bg);
+    color: var(--accent);
+    border: 1px solid #1e3a5f;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+
+  /* Connector */
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 4px 0;
+  }
+  .connector-line {
+    width: 2px;
+    height: 24px;
+    background: linear-gradient(to bottom, var(--border), var(--accent));
+    opacity: 0.6;
+  }
+  .connector-arrow {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid var(--accent);
+    opacity: 0.7;
+  }
+
+  /* For each container */
+  .foreach-wrapper {
+    width: 100%;
+    border: 1px dashed #7c3aed55;
+    border-radius: 10px;
+    padding: 4px 4px 4px 4px;
+    background: #1a0a3022;
+    position: relative;
+  }
+  .foreach-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-left: 10px;
+    opacity: 0.8;
+  }
+
+  /* Output section */
+  .output-section {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 48px;
+    border-top: 1px solid var(--border);
+    padding-top: 28px;
+  }
+  .output-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .output-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .output-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: #0a1628;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    border-bottom: 1px solid var(--border);
+  }
+  .output-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #1f2937;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .status-pending { background: #451a03; color: #fb923c; }
+  .status-replied { background: #064e3b; color: #34d399; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .node:nth-child(1) { animation-delay: 0.05s; }
+  .node:nth-child(2) { animation-delay: 0.1s; }
+  .node:nth-child(3) { animation-delay: 0.15s; }
+  .node:nth-child(4) { animation-delay: 0.2s; }
+  .node:nth-child(5) { animation-delay: 0.25s; }
+
+  /* Footer note */
+  .footer-note {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 36px;
+    padding: 14px 18px;
+    background: #0a1628;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .footer-note strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="label">Power Automate ／ AI Governance</div>
+  <h1>Outlook 郵件自動匯總流程<br><span style="font-weight:300;font-size:17px">部位超限通知信 → 追蹤清單</span></h1>
+  <p>定時掃描 Outlook 收件匣，篩選部位超限通知信，自動彙整寄件人與主旨，產出每日回覆追蹤摘要信。屬 AI 治理流程自動化範疇。</p>
+  <div class="tags">
+    <span class="tag">Power Automate</span>
+    <span class="tag">Outlook</span>
+    <span class="tag">AI Governance</span>
+    <span class="tag">No-Code</span>
+    <span class="tag">自動化</span>
+  </div>
+</div>
+
+<!-- Flow Diagram -->
+<div class="flow">
+
+  <!-- Step 1 -->
+  <div class="node">
+    <div class="node-icon icon-blue">🕐</div>
+    <div class="node-body">
+      <div class="node-title">Recurrence（排程觸發）</div>
+      <div class="node-desc">每日定時自動執行，例如每天 08:00 觸發一次，無需手動啟動。</div>
+    </div>
+    <div class="node-badge">TRIGGER</div>
+  </div>
+
+  <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+  <!-- Step 2 -->
+  <div class="node">
+    <div class="node-icon icon-blue">📧</div>
+    <div class="node-body">
+      <div class="node-title">取得電子郵件 V3</div>
+      <div class="node-desc">從 Outlook 收件匣抓取最新郵件清單，設定搜尋條件（資料夾、日期範圍等）。</div>
+    </div>
+    <div class="node-badge">Outlook</div>
+  </div>
+
+  <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+  <!-- Step 3 -->
+  <div class="node">
+    <div class="node-icon icon-purple">🔍</div>
+    <div class="node-body">
+      <div class="node-title">篩選陣列</div>
+      <div class="node-desc">過濾郵件清單，僅保留主旨或寄件人符合「部位超限」關鍵字的通知信。</div>
+    </div>
+    <div class="node-badge">Filter Array</div>
+  </div>
+
+  <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+  <!-- Step 4 -->
+  <div class="node">
+    <div class="node-icon icon-gray">📦</div>
+    <div class="node-body">
+      <div class="node-title">初始化變數</div>
+      <div class="node-desc">建立一個空字串變數，用來累積每封郵件的摘要資訊（寄件人、主旨、時間）。</div>
+    </div>
+    <div class="node-badge">Variable</div>
+  </div>
+
+  <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+  <!-- Step 5: For each -->
+  <div class="foreach-wrapper">
+    <div class="foreach-label">∞ For Each — 逐封郵件處理</div>
+    <div class="node" style="background:#1a0a3044; border-color:#7c3aed44;">
+      <div class="node-icon icon-purple">✏️</div>
+      <div class="node-body">
+        <div class="node-title">附加至字串變數</div>
+        <div class="node-desc">將每封通知信的主旨、時間戳記格式化後，附加到彙總字串中。</div>
+      </div>
+      <div class="node-badge" style="color:#a78bfa; border-color:#7c3aed44;">Append</div>
+    </div>
+  </div>
+
+  <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+  <!-- Step 6 -->
+  <div class="node">
+    <div class="node-icon icon-blue">📤</div>
+    <div class="node-body">
+      <div class="node-title">傳送電子郵件 V2</div>
+      <div class="node-desc">將彙整完成的通知清單，以摘要信寄送給負責人，作為每日回覆追蹤依據。</div>
+    </div>
+    <div class="node-badge">Outlook</div>
+  </div>
+
+</div>
+
+<!-- Output Example -->
+<div class="output-section">
+  <div class="output-title">📋 輸出摘要信範例</div>
+  <table class="output-table">
+    <thead>
+      <tr>
+        <th>主旨</th>
+        <th>通知日期</th>
+        <th>狀態</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>A 部門超限通知</td>
+        <td>2025-06-01</td>
+        <td><span class="status-badge status-pending">待回覆</span></td>
+      </tr>
+      <tr>
+        <td>B 部門超限通知</td>
+        <td>2025-06-02</td>
+        <td><span class="status-badge status-replied">已回覆</span></td>
+      </tr>
+      <tr>
+        <td>C 部門超限通知</td>
+        <td>2025-06-03</td>
+        <td><span class="status-badge status-pending">待回覆</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Footer Note -->
+<div class="footer-note">
+  <strong>AI 治理應用說明：</strong>此流程屬於 AI 風控監控的輔助自動化。透過 Power Automate 無程式碼工具，將原本需要人工每天逐封查信的工作，轉為每日自動彙整通知清單，協助法遵/風控人員有效追蹤回覆狀況，降低人為遺漏風險。
+</div>
+
+</body>
+</html>
