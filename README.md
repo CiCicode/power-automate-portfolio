@@ -1,7 +1,7 @@
 ## 流程說明
 👉 [點此查看互動式流程圖] https://cicicode.github.io/power-automate-portfolio/
 
-### 附加至字串變數
+#### 附加至字串變數
 
 ```
 concat(
@@ -46,7 +46,7 @@ trim(
 '</tr>'
 )
 ```
-### 傳送至電子郵件(V2)
+#### 傳送至電子郵件(V2)
 
 ```
 {concat(
