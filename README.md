@@ -1,9 +1,9 @@
 ## 流程說明
 👉 [點此查看互動式流程圖] https://cicicode.github.io/power-automate-portfolio/
 
-## 附加至字串變數
-'''
-concat(
+### 附加至字串變數
+
+'''concat(
 '<tr>',
 
 '<td style="padding:6px 40px 6px 6px;">',
@@ -45,9 +45,9 @@ trim(
 '</tr>'
 )
 
-## 傳送至電子郵件(V2)
-'''
-concat(
+### 傳送至電子郵件(V2)
+
+'''concat(
 '本月通知清單：<br><br>
 <table style="border-collapse:collapse; font-family:Consolas, monospace; font-size:13px;">
 <tr>
