@@ -3,7 +3,8 @@
 
 ### 附加至字串變數
 
-'''concat(
+'''json
+concat(
 '<tr>',
 
 '<td style="padding:6px 40px 6px 6px;">',
@@ -47,7 +48,8 @@ trim(
 
 ### 傳送至電子郵件(V2)
 
-'''concat(
+'''json
+concat(
 '本月通知清單：<br><br>
 <table style="border-collapse:collapse; font-family:Consolas, monospace; font-size:13px;">
 <tr>
